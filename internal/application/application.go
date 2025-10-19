@@ -4,13 +4,17 @@ package application
 import (
 	"net"
 
+	"echo-template/internal/delivery/handlers"
 	"echo-template/internal/infrastructure"
 	"echo-template/internal/infrastructure/database"
 	"echo-template/internal/infrastructure/logger"
+	"echo-template/internal/infrastructure/repository"
+	protovalidate_middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
 
+	"buf.build/go/protovalidate"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/project-misis/users_proto/pb"
 
-	// "github.com/project-misis/users_proto/pb"
 	"google.golang.org/grpc"
 )
 
@@ -22,8 +26,14 @@ type Application struct {
 }
 
 func NewApplication(config *infrastructure.Config) *Application {
-	gs := grpc.NewServer()
-	l := logger.NewLogger() // Создаём логгер
+	validator, err := protovalidate.New()
+	if err != nil {
+		panic(err)
+	}
+
+	interceptor := protovalidate_middleware.UnaryServerInterceptor(validator)
+	gs := grpc.NewServer(grpc.UnaryInterceptor(interceptor))
+	l := logger.NewLogger()
 
 	db, err := database.NewPostgresDB(config, l)
 	if err != nil {
@@ -31,6 +41,9 @@ func NewApplication(config *infrastructure.Config) *Application {
 		return nil
 	}
 
+	repo := repository.NewUserRepository(db)
+	s := handlers.NewUserService(repo)
+	pb.RegisterCrudServer(gs, s)
 	return &Application{
 		Server:  gs,
 		Address: config.Port,

@@ -1,5 +1,5 @@
-// Package grpc
-package grpc
+// Package handlers
+package handlers
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/project-misis/users_proto/pb"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -18,7 +17,11 @@ type UserService struct {
 	pb.UnimplementedCrudServer
 }
 
-func (s *UserService) GetUserByID(ctx context.Context, p *pb.UserGet, opts ...grpc.CallOption) (*pb.User, error) {
+func NewUserService(r *repository.UserRepository) UserService {
+	return UserService{r: r}
+}
+
+func (s UserService) GetUserByID(ctx context.Context, p *pb.UserGet) (*pb.User, error) {
 	uid, err := uuid.Parse(p.GetId())
 	if err != nil {
 		return nil, err
@@ -37,7 +40,7 @@ func (s *UserService) GetUserByID(ctx context.Context, p *pb.UserGet, opts ...gr
 	}, nil
 }
 
-func (s *UserService) DeleteUserByID(ctx context.Context, p *pb.UserDelete, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (s UserService) DeleteUserByID(ctx context.Context, p *pb.UserDelete) (*emptypb.Empty, error) {
 	uid, err := uuid.Parse(p.GetId())
 	if err != nil {
 		return &emptypb.Empty{}, err
@@ -49,7 +52,7 @@ func (s *UserService) DeleteUserByID(ctx context.Context, p *pb.UserDelete, opts
 	return &emptypb.Empty{}, err
 }
 
-func (s *UserService) UpdateUserByID(ctx context.Context, p *pb.UserUpdate, opts ...grpc.CallOption) (*pb.User, error) {
+func (s UserService) UpdateUserByID(ctx context.Context, p *pb.UserUpdate) (*pb.User, error) {
 	uid, err := uuid.Parse(p.GetId())
 	if err != nil {
 		return nil, err
@@ -73,5 +76,3 @@ func (s *UserService) UpdateUserByID(ctx context.Context, p *pb.UserUpdate, opts
 		Faculty:   u.Faculty,
 	}, nil
 }
-
-var _ pb.CrudClient = (*UserService)(nil)

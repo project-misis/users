@@ -14,7 +14,7 @@ type UserRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewClientRepository(db *pgxpool.Pool) *UserRepository {
+func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	if db == nil {
 		panic("Database connection is nil in repository")
 	}

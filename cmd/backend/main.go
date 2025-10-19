@@ -9,6 +9,6 @@ func main() {
 	config := infrastructure.LoadConfig()
 	app := application.NewApplication(config)
 	if err := app.RunServer(); err != nil {
-		return
+		panic("failed to start server")
 	}
 }
