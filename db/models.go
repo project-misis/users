@@ -9,9 +9,9 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Email        string    `json:"email"`
-	FirstName    string    `json:"first_name"`
-	SecondName   string    `json:"second_name"`
-	PasswordHash string    `json:"password_hash"`
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Firstname string    `json:"firstname"`
+	Course    string    `json:"course"`
+	Faculty   string    `json:"faculty"`
 }

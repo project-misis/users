@@ -1,5 +1,5 @@
-// Package usecase
-package usecase
+// Package handlers
+package handlers
 
 import (
 	"context"
@@ -9,17 +9,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/project-misis/users_proto/pb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type UserService struct {
 	r *repository.UserRepository
+	pb.UnimplementedCrudServer
 }
 
-func NewClientService(repo *repository.UserRepository) *UserService {
-	return &UserService{r: repo}
+func NewUserService(r *repository.UserRepository) UserService {
+	return UserService{r: r}
 }
 
-func (s *UserService) GetUserByID(ctx context.Context, p *pb.UserGet) (*pb.User, error) {
+func (s UserService) GetUserByID(ctx context.Context, p *pb.UserGet) (*pb.User, error) {
 	uid, err := uuid.Parse(p.GetId())
 	if err != nil {
 		return nil, err
@@ -38,19 +40,19 @@ func (s *UserService) GetUserByID(ctx context.Context, p *pb.UserGet) (*pb.User,
 	}, nil
 }
 
-func (s *UserService) DeleteUserByID(ctx context.Context, p *pb.UserDelete) error {
+func (s UserService) DeleteUserByID(ctx context.Context, p *pb.UserDelete) (*emptypb.Empty, error) {
 	uid, err := uuid.Parse(p.GetId())
 	if err != nil {
-		return err
+		return &emptypb.Empty{}, err
 	}
 	err = s.r.DeleteUser(ctx, uid)
 	if err != nil {
-		return err
+		return &emptypb.Empty{}, err
 	}
-	return nil
+	return &emptypb.Empty{}, err
 }
 
-func (s *UserService) UpdateUserByID(ctx context.Context, p *pb.UserUpdate) (*pb.User, error) {
+func (s UserService) UpdateUserByID(ctx context.Context, p *pb.UserUpdate) (*pb.User, error) {
 	uid, err := uuid.Parse(p.GetId())
 	if err != nil {
 		return nil, err

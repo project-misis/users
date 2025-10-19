@@ -11,28 +11,6 @@ import (
 	uuid "github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :exec
-insert into users (email, first_name, second_name, password_hash)
-values ($1, $2, $3, $4)
-`
-
-type CreateUserParams struct {
-	Email        string `json:"email"`
-	FirstName    string `json:"first_name"`
-	SecondName   string `json:"second_name"`
-	PasswordHash string `json:"password_hash"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.Exec(ctx, createUser,
-		arg.Email,
-		arg.FirstName,
-		arg.SecondName,
-		arg.PasswordHash,
-	)
-	return err
-}
-
 const deleteUser = `-- name: DeleteUser :exec
 delete from users where id = $1
 `
@@ -43,7 +21,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUser = `-- name: GetUser :one
-select id, email, first_name, second_name, password_hash from users
+select id, username, firstname, course, faculty from users
 where id = $1
 `
 
@@ -52,10 +30,10 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Email,
-		&i.FirstName,
-		&i.SecondName,
-		&i.PasswordHash,
+		&i.Username,
+		&i.Firstname,
+		&i.Course,
+		&i.Faculty,
 	)
 	return i, err
 }
@@ -63,34 +41,37 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 const updateUser = `-- name: UpdateUser :one
 update users
 set 
-    first_name = coalesce($1, first_name),
-    second_name = coalesce($2, second_name),
-    email = coalesce($3, email)
-where id = $4
-returning id, email, first_name, second_name, password_hash
+    firstname = coalesce($1, firstname),
+    username = coalesce($2, username),
+    course = coalesce($3, course),
+    faculty = coalesce($4, faculty)
+where id = $5
+returning id, username, firstname, course, faculty
 `
 
 type UpdateUserParams struct {
-	FirstName  *string   `json:"first_name"`
-	SecondName *string   `json:"second_name"`
-	Email      *string   `json:"email"`
-	ID         uuid.UUID `json:"id"`
+	Firstname *string   `json:"firstname"`
+	Username  *string   `json:"username"`
+	Course    *string   `json:"course"`
+	Faculty   *string   `json:"faculty"`
+	ID        uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
-		arg.FirstName,
-		arg.SecondName,
-		arg.Email,
+		arg.Firstname,
+		arg.Username,
+		arg.Course,
+		arg.Faculty,
 		arg.ID,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Email,
-		&i.FirstName,
-		&i.SecondName,
-		&i.PasswordHash,
+		&i.Username,
+		&i.Firstname,
+		&i.Course,
+		&i.Faculty,
 	)
 	return i, err
 }

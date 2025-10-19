@@ -1,0 +1,25 @@
+package utils
+
+import (
+	"bytes"
+	"crypto/rand"
+
+	"golang.org/x/crypto/argon2"
+)
+
+func HashPassword(password string) (salt []byte, hash []byte) {
+	salt = make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		panic(err)
+	}
+	hash = argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+	return salt, hash
+}
+
+func CheckHash(password string, salt []byte, hash []byte) bool {
+	new_hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+	if bytes.Equal(new_hash, hash) {
+		return true
+	}
+	return false
+}
