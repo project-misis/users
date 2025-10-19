@@ -1,6 +1,7 @@
--- name: CreateUser :exec
-insert into users (email, first_name, second_name, password_hash)
-values ($1, $2, $3, $4);
+-- name: CreateUser :one
+insert into users (phone_number, first_name, second_name)
+values ($1, $2, $3)
+returning *;
 
 -- name: GetUser :one
 select * from users
@@ -14,7 +15,7 @@ update users
 set 
     first_name = coalesce(sqlc.narg('first_name'), first_name),
     second_name = coalesce(sqlc.narg('second_name'), second_name),
-    email = coalesce(sqlc.narg('email'), email)
+    phone_number = coalesce(sqlc.narg('phone_number'), phone_number)
 where id = sqlc.arg('id')
 returning *;
 

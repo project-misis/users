@@ -12,7 +12,9 @@ type Server struct {
 	pb.UnimplementedCrudServer
 }
 
-func (s *Server) CreateUser(context.Context, *pb.UserPost) (*pb.Status, error) {
+var _ pb.CrudClient = (*Server)(nil)
+
+func (s *Server) CreateUser(context.Context, *pb.UserPost) (*pb.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 
