@@ -1,31 +1,77 @@
+// Package grpc
 package grpc
 
 import (
 	"context"
 
+	"echo-template/db"
+	"echo-template/internal/infrastructure/repository"
+
+	"github.com/google/uuid"
 	"github.com/project-misis/users_proto/pb"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type Server struct {
+type UserService struct {
+	r *repository.UserRepository
 	pb.UnimplementedCrudServer
 }
 
-var _ pb.CrudClient = (*Server)(nil)
+func (s *UserService) GetUserByID(ctx context.Context, p *pb.UserGet, opts ...grpc.CallOption) (*pb.User, error) {
+	uid, err := uuid.Parse(p.GetId())
+	if err != nil {
+		return nil, err
+	}
+	u, err := s.r.GetUser(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
 
-func (s *Server) CreateUser(context.Context, *pb.UserPost) (*pb.User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+	return &pb.User{
+		Id:        u.ID.String(),
+		Username:  u.Username,
+		FirstName: u.Firstname,
+		Course:    u.Course,
+		Faculty:   u.Faculty,
+	}, nil
 }
 
-func (s *Server) DeleteUserById(context.Context, *pb.UserDelete) (*pb.Status, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserById not implemented")
+func (s *UserService) DeleteUserByID(ctx context.Context, p *pb.UserDelete, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	uid, err := uuid.Parse(p.GetId())
+	if err != nil {
+		return &emptypb.Empty{}, err
+	}
+	err = s.r.DeleteUser(ctx, uid)
+	if err != nil {
+		return &emptypb.Empty{}, err
+	}
+	return &emptypb.Empty{}, err
 }
 
-func (s *Server) UpdateUserById(context.Context, *pb.UserUpdate) (*pb.User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserById not implemented")
+func (s *UserService) UpdateUserByID(ctx context.Context, p *pb.UserUpdate, opts ...grpc.CallOption) (*pb.User, error) {
+	uid, err := uuid.Parse(p.GetId())
+	if err != nil {
+		return nil, err
+	}
+	params := db.UpdateUserParams{
+		ID:        uid,
+		Username:  p.Username,
+		Firstname: p.FirstName,
+		Faculty:   p.Faculty,
+		Course:    p.Course,
+	}
+	u, err := s.r.UpdateUser(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.User{
+		Id:        u.ID.String(),
+		Username:  u.Username,
+		FirstName: u.Firstname,
+		Course:    u.Course,
+		Faculty:   u.Faculty,
+	}, nil
 }
 
-func (s *Server) GetUserById(context.Context, *pb.UserGet) (*pb.User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserById not implemented")
-}
+var _ pb.CrudClient = (*UserService)(nil)
